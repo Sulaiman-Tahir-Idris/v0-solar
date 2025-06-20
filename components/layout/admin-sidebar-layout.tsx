@@ -1,0 +1,210 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/lib/auth/auth-provider"
+import {
+  LayoutDashboard,
+  Users,
+  Store,
+  ShoppingBag,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  Sun,
+  Moon,
+  Bell,
+  Search,
+  Tag,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { Input } from "@/components/ui/input"
+
+const navigationItems = [
+  {
+    name: "Overview",
+    href: "/admin",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Vendors",
+    href: "/admin/vendors",
+    icon: Store,
+    badge: "3",
+  },
+  {
+    name: "Users",
+    href: "/admin/users",
+    icon: Users,
+  },
+  {
+    name: "Categories",
+    href: "/admin/categories",
+    icon: Tag,
+  },
+  {
+    name: "Orders",
+    href: "/admin/orders",
+    icon: ShoppingBag,
+  },
+  {
+    name: "Analytics",
+    href: "/admin/analytics",
+    icon: BarChart3,
+  },
+  {
+    name: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+  },
+]
+
+interface AdminSidebarLayoutProps {
+  children: React.ReactNode
+}
+
+export function AdminSidebarLayout({ children }: AdminSidebarLayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  }
+
+  const Sidebar = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="p-6 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">S</span>
+          </div>
+          <div>
+            <h2 className="font-bold text-lg">SolarHub</h2>
+            <p className="text-xs text-muted-foreground">Admin Panel</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navigationItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="flex-1">{item.name}</span>
+              {item.badge && (
+                <Badge variant={isActive ? "secondary" : "outline"} className="text-xs">
+                  {item.badge}
+                </Badge>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* User Profile */}
+      <div className="p-4 border-t">
+        <div className="flex items-center gap-3 mb-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name || "Admin"} />
+            <AvatarFallback className="text-sm">{getInitials(user?.name || "Admin")}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{user?.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-destructive hover:text-destructive"
+          onClick={logout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-72 lg:bg-card lg:border-r">
+        <Sidebar />
+      </div>
+
+      {/* Mobile Sidebar */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
+          <div className="fixed inset-y-0 left-0 w-72 bg-card border-r">
+            <Sidebar />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="lg:pl-72">
+        {/* Top Header */}
+        <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex h-16 items-center gap-4 px-6">
+            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setIsSidebarOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search..." className="pl-10" />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Bell className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content with proper margin */}
+        <main className="p-6">{children}</main>
+      </div>
+    </div>
+  )
+}
